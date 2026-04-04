@@ -27,10 +27,13 @@ class BedrockPrismGateway extends PrismGateway
     protected function withProviderOptions($request, Provider $provider, ?array $schema, ?TextGenerationOptions $options)
     {
         if ($provider instanceof BedrockProvider) {
+            $agentProviderOptions = $options?->providerOptions($provider->driver());
+
             return $request
                 ->withProviderOptions(array_filter([
                     'use_tool_calling' => $schema ? true : null,
-                ]))
+                    ...($agentProviderOptions ?? []),
+                ], fn (mixed $value): bool => $value !== null))
                 ->withMaxTokens($options?->maxTokens ?? $provider->defaultMaxTokens());
         }
 

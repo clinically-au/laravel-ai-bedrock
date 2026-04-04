@@ -2,12 +2,12 @@
 
 namespace Clinically\LaravelAiBedrock\Tests;
 
+use Clinically\LaravelAiBedrock\BedrockPrismGateway;
+use Clinically\LaravelAiBedrock\BedrockProvider;
 use Illuminate\Contracts\Events\Dispatcher;
 use Laravel\Ai\Gateway\TextGenerationOptions;
 use Orchestra\Testbench\TestCase;
 use Prism\Prism\Facades\Prism;
-use Clinically\LaravelAiBedrock\BedrockPrismGateway;
-use Clinically\LaravelAiBedrock\BedrockProvider;
 
 class BedrockPrismGatewayTest extends TestCase
 {
@@ -153,6 +153,42 @@ class BedrockPrismGatewayTest extends TestCase
         $resolved = $result->toRequest();
 
         $this->assertEquals(32_000, $resolved->maxTokens());
+    }
+
+    public function test_with_provider_options_merges_agent_options_for_bedrock(): void
+    {
+        $gateway = $this->makeGateway();
+        $provider = $this->makeProvider($gateway);
+        $request = $this->makeConfiguredRequest();
+        $options = new TextGenerationOptions(
+            maxTokens: 2_048,
+            agent: new class implements \Laravel\Ai\Contracts\Agent, \Laravel\Ai\Contracts\HasProviderOptions
+            {
+                use \Laravel\Ai\Promptable;
+
+                public function instructions(): \Stringable|string
+                {
+                    return 'test';
+                }
+
+                public function providerOptions(\Laravel\Ai\Enums\Lab|string $provider): array
+                {
+                    return $provider === 'bedrock'
+                        ? ['apiSchema' => 'converse', 'guardrailConfig' => ['guardrailIdentifier' => 'gr-123']]
+                        : [];
+                }
+            },
+        );
+
+        $reflection = new \ReflectionMethod(BedrockPrismGateway::class, 'withProviderOptions');
+        $result = $reflection->invoke($gateway, $request, $provider, ['type' => 'object'], $options);
+
+        $resolved = $result->toRequest();
+
+        $this->assertEquals('converse', $resolved->providerOptions('apiSchema'));
+        $this->assertEquals(['guardrailIdentifier' => 'gr-123'], $resolved->providerOptions('guardrailConfig'));
+        $this->assertTrue($resolved->providerOptions('use_tool_calling'));
+        $this->assertEquals(2_048, $resolved->maxTokens());
     }
 
     public function test_with_provider_options_delegates_to_parent_for_other_providers(): void
