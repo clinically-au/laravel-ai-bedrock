@@ -15,7 +15,7 @@ class BedrockPrismGatewayTest extends TestCase
     {
         return [
             \Prism\Prism\PrismServiceProvider::class,
-            \Prism\Bedrock\BedrockServiceProvider::class,
+            \Clinically\PrismBedrock\BedrockServiceProvider::class,
         ];
     }
 

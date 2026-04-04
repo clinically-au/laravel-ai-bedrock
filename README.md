@@ -21,7 +21,7 @@ These fixes have been submitted upstream. Once merged, this package will switch 
 
 - PHP 8.4+
 - Laravel 12+
-- `laravel/ai` ^0.3
+- `laravel/ai` ^0.4
 - `clinically/prism-bedrock`
 
 ## Installation
