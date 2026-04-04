@@ -192,4 +192,14 @@ class BedrockProviderTest extends TestCase
 
         $this->assertEquals(32_000, $provider->defaultMaxTokens());
     }
+
+    public function test_embedding_options_for_titan_include_dimensions(): void
+    {
+        $provider = $this->makeProvider();
+
+        $this->assertEquals([
+            'dimensions' => 512,
+        ], $provider->embeddingOptionsFor('amazon.titan-embed-text-v2:0', 512));
+    }
+
 }

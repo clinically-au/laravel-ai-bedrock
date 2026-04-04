@@ -3,6 +3,8 @@
 namespace Clinically\LaravelAiBedrock\Tests;
 
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Support\Facades\Http;
+use Laravel\Ai\Responses\EmbeddingsResponse;
 use Laravel\Ai\Gateway\TextGenerationOptions;
 use Orchestra\Testbench\TestCase;
 use Prism\Prism\Facades\Prism;
@@ -15,7 +17,7 @@ class BedrockPrismGatewayTest extends TestCase
     {
         return [
             \Prism\Prism\PrismServiceProvider::class,
-            \Prism\Bedrock\BedrockServiceProvider::class,
+            \Clinically\PrismBedrock\BedrockServiceProvider::class,
         ];
     }
 
@@ -179,4 +181,32 @@ class BedrockPrismGatewayTest extends TestCase
         $this->assertEquals(2_000, $resolved->maxTokens());
         $this->assertEmpty($resolved->providerOptions());
     }
+
+    public function test_generate_embeddings_passes_bedrock_dimensions(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'embeddings' => [[0.1, 0.2, 0.3]],
+            ]),
+        ]);
+
+        $gateway = $this->makeGateway();
+        $provider = $this->makeProvider($gateway);
+
+        $response = $gateway->generateEmbeddings(
+            $provider,
+            'cohere.embed-english-v3',
+            ['Hello, world!'],
+            512,
+        );
+
+        Http::assertSent(function ($request): bool {
+            return $request->data()['output_dimension'] === 512;
+        });
+
+        $this->assertInstanceOf(EmbeddingsResponse::class, $response);
+        $this->assertSame([[0.1, 0.2, 0.3]], $response->embeddings);
+        $this->assertSame(0, $response->tokens);
+    }
+
 }

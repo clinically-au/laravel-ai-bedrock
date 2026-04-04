@@ -16,6 +16,9 @@ return [
         'embeddings' => [
             'default' => env('AWS_BEDROCK_EMBEDDINGS_MODEL', 'amazon.titan-embed-text-v2:0'),
             'dimensions' => env('AWS_BEDROCK_EMBEDDINGS_DIMENSIONS', 1024),
+            'options' => [
+                'normalize' => env('AWS_BEDROCK_EMBEDDINGS_NORMALIZE'),
+            ],
         ],
     ],
 ];

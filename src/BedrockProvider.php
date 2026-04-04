@@ -2,6 +2,7 @@
 
 namespace Clinically\LaravelAiBedrock;
 
+use Illuminate\Support\Arr;
 use Laravel\Ai\Contracts\Providers\EmbeddingProvider;
 use Laravel\Ai\Contracts\Providers\TextProvider;
 use Laravel\Ai\Providers\Concerns;
@@ -55,6 +56,30 @@ class BedrockProvider extends Provider implements EmbeddingProvider, TextProvide
     public function defaultEmbeddingsDimensions(): int
     {
         return $this->config['models']['embeddings']['dimensions'] ?? 1024;
+    }
+
+    public function embeddingOptionsFor(string $model, int $dimensions): array
+    {
+        $options = $this->config['models']['embeddings']['options'] ?? [];
+
+        return match (true) {
+            str_contains($model, 'cohere.') => array_filter([
+                'output_dimension' => $dimensions,
+                ...Arr::only($options, [
+                    'input_type',
+                    'embedding_types',
+                    'truncate',
+                ]),
+            ], fn (mixed $value): bool => $value !== null),
+            str_contains($model, 'amazon.titan-embed-text-v2') => array_filter([
+                'dimensions' => $dimensions,
+                ...Arr::only($options, [
+                    'normalize',
+                    'embeddingTypes',
+                ]),
+            ], fn (mixed $value): bool => $value !== null),
+            default => [],
+        };
     }
 
     public function defaultMaxTokens(): int
