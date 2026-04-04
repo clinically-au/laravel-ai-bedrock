@@ -15,7 +15,7 @@ class ServiceProviderTest extends TestCase
         return [
             \Laravel\Ai\AiServiceProvider::class,
             \Prism\Prism\PrismServiceProvider::class,
-            \Prism\Bedrock\BedrockServiceProvider::class,
+            \Clinically\PrismBedrock\BedrockServiceProvider::class,
             BedrockServiceProvider::class,
         ];
     }
