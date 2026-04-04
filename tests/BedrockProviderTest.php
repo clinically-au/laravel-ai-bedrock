@@ -154,6 +154,12 @@ class BedrockProviderTest extends TestCase
                     'default' => 'custom.embed-v1',
                     'dimensions' => 512,
                 ],
+                'image' => [
+                    'default' => 'custom.image-v1',
+                    'options' => [
+                        'quality' => 'premium',
+                    ],
+                ],
             ],
         ]);
 
@@ -162,6 +168,7 @@ class BedrockProviderTest extends TestCase
         $this->assertEquals('custom.smart-v1', $provider->smartestTextModel());
         $this->assertEquals('custom.embed-v1', $provider->defaultEmbeddingsModel());
         $this->assertEquals(512, $provider->defaultEmbeddingsDimensions());
+        $this->assertEquals('custom.image-v1', $provider->defaultImageModel());
     }
 
     public function test_default_region_fallback(): void
@@ -191,5 +198,35 @@ class BedrockProviderTest extends TestCase
         $provider = $this->makeProvider(['max_tokens' => 32_000]);
 
         $this->assertEquals(32_000, $provider->defaultMaxTokens());
+    }
+
+    public function test_default_image_model_from_config(): void
+    {
+        $provider = $this->makeProvider([
+            'models' => [
+                'image' => [
+                    'default' => 'amazon.titan-image-generator-v2:0',
+                ],
+            ],
+        ]);
+
+        $this->assertEquals('amazon.titan-image-generator-v2:0', $provider->defaultImageModel());
+    }
+
+    public function test_titan_image_options_normalize_size_and_quality(): void
+    {
+        $provider = $this->makeProvider([
+            'models' => [
+                'image' => [
+                    'default' => 'amazon.titan-image-generator-v2:0',
+                ],
+            ],
+        ]);
+
+        $this->assertEquals([
+            'height' => 1024,
+            'width' => 1536,
+            'quality' => 'premium',
+        ], $provider->imageOptionsFor('amazon.titan-image-generator-v2:0', '3:2', 'high'));
     }
 }

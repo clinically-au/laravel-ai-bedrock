@@ -17,5 +17,11 @@ return [
             'default' => env('AWS_BEDROCK_EMBEDDINGS_MODEL', 'amazon.titan-embed-text-v2:0'),
             'dimensions' => env('AWS_BEDROCK_EMBEDDINGS_DIMENSIONS', 1024),
         ],
+        'image' => [
+            'default' => env('AWS_BEDROCK_IMAGE_MODEL', 'amazon.titan-image-generator-v2:0'),
+            'options' => [
+                'quality' => env('AWS_BEDROCK_IMAGE_QUALITY'),
+            ],
+        ],
     ],
 ];

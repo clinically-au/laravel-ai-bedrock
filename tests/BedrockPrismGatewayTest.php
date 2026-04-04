@@ -3,6 +3,8 @@
 namespace Clinically\LaravelAiBedrock\Tests;
 
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Support\Facades\Http;
+use Laravel\Ai\Responses\ImageResponse;
 use Laravel\Ai\Gateway\TextGenerationOptions;
 use Orchestra\Testbench\TestCase;
 use Prism\Prism\Facades\Prism;
@@ -15,7 +17,7 @@ class BedrockPrismGatewayTest extends TestCase
     {
         return [
             \Prism\Prism\PrismServiceProvider::class,
-            \Prism\Bedrock\BedrockServiceProvider::class,
+            \Clinically\PrismBedrock\BedrockServiceProvider::class,
         ];
     }
 
@@ -178,5 +180,42 @@ class BedrockPrismGatewayTest extends TestCase
 
         $this->assertEquals(2_000, $resolved->maxTokens());
         $this->assertEmpty($resolved->providerOptions());
+    }
+
+    public function test_generate_image_supports_bedrock_provider(): void
+    {
+        Http::fake([
+            '*' => Http::response([
+                'images' => ['base64-image'],
+            ]),
+        ]);
+
+        $gateway = $this->makeGateway();
+        $provider = $this->makeProvider($gateway, [
+            'models' => [
+                'image' => [
+                    'default' => 'amazon.titan-image-generator-v2:0',
+                ],
+            ],
+        ]);
+
+        $response = $gateway->generateImage(
+            $provider,
+            'amazon.titan-image-generator-v2:0',
+            'A beautiful sunset',
+            size: '1:1',
+            quality: 'high',
+        );
+
+        Http::assertSent(function ($request): bool {
+            $data = $request->data();
+
+            return $data['imageGenerationConfig']['height'] === 1024
+                && $data['imageGenerationConfig']['width'] === 1024
+                && $data['imageGenerationConfig']['quality'] === 'premium';
+        });
+
+        $this->assertInstanceOf(ImageResponse::class, $response);
+        $this->assertCount(1, $response->images);
     }
 }

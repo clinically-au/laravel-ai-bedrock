@@ -15,7 +15,7 @@ class ServiceProviderTest extends TestCase
         return [
             \Laravel\Ai\AiServiceProvider::class,
             \Prism\Prism\PrismServiceProvider::class,
-            \Prism\Bedrock\BedrockServiceProvider::class,
+            \Clinically\PrismBedrock\BedrockServiceProvider::class,
             BedrockServiceProvider::class,
         ];
     }
@@ -36,6 +36,9 @@ class ServiceProviderTest extends TestCase
                 'embeddings' => [
                     'default' => 'amazon.titan-embed-text-v2:0',
                     'dimensions' => 1024,
+                ],
+                'image' => [
+                    'default' => 'amazon.titan-image-generator-v2:0',
                 ],
             ],
         ]);
@@ -70,11 +73,11 @@ class ServiceProviderTest extends TestCase
         Ai::audioProvider('bedrock');
     }
 
-    public function test_image_provider_throws_logic_exception(): void
+    public function test_image_provider_returns_bedrock_provider(): void
     {
-        $this->expectException(LogicException::class);
+        $provider = Ai::imageProvider('bedrock');
 
-        Ai::imageProvider('bedrock');
+        $this->assertInstanceOf(BedrockProvider::class, $provider);
     }
 
     public function test_transcription_provider_throws_logic_exception(): void
@@ -99,5 +102,6 @@ class ServiceProviderTest extends TestCase
         $this->assertEquals('anthropic.claude-sonnet-4-5-20250929-v1:0', $provider->defaultTextModel());
         $this->assertEquals('anthropic.claude-haiku-4-5-20251001-v1:0', $provider->cheapestTextModel());
         $this->assertEquals('anthropic.claude-opus-4-6-v1:0', $provider->smartestTextModel());
+        $this->assertEquals('amazon.titan-image-generator-v2:0', $provider->defaultImageModel());
     }
 }
